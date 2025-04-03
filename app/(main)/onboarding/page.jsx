@@ -11,6 +11,7 @@ const OnBoardingPage = async () => {
     redirect("/dashboard");
   }
 
+  console.log(isOnboarded);
   return (
     <main>
       <OnboardForm industries={industries} />
