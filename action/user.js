@@ -31,12 +31,12 @@ export async function updateUser(data) {
               industry: data.industry,
               salaryRanges: [],
               growthRate: 0,
-              demandLevel: "Medium",
+              demandLevel: "MEDIUM",
               topSkills: [],
-              marketOutlook: "Neutral",
+              marketOutlook: "NEUTRAL",
               keyTrends: [],
-              recommendedSkills: [],
-              nextUpdate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // 1 week from now
+              recommendedSkilled: [],
+              nextUpdated: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // 1 week from now
             },
           });
         }
@@ -59,10 +59,10 @@ export async function updateUser(data) {
         timeOut: 10000, // default:5000
       }
     );
-    return result.user;
+    return { success: true, ...result };
   } catch (error) {
     console.error("Error updating user and industry :", error.message);
-    throw new Error("Failed to update profile");
+    throw new Error("Failed to update profile" + error.message);
   }
 }
 
@@ -78,20 +78,19 @@ export async function getUserOnboardingStatus() {
   if (!user) throw new Error("User not found");
   try {
     const user = await db.user.findUnique({
-        where:{
-            clerkUserId:userId,
-        },
-        select:{
-            industry:true,
-        },
+      where: {
+        clerkUserId: userId,
+      },
+      select: {
+        industry: true,
+      },
     });
 
     return {
-        isOnboarded: !!user?.industry,
+      isOnboarded: !!user?.industry,
     };
-
   } catch (error) {
     console.error("Error checking onboarding status :", error.message);
-    throw new Error("Failed to check onboarding status");
+    throw new Error("Failed to check onboarding status" + error.message);
   }
 }

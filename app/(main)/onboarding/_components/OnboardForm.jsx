@@ -1,32 +1,38 @@
 "use client";
 
+import { updateUser } from "@/action/user";
 import { onboardingSchema } from "@/app/lib/schema";
 import { Button } from "@/components/ui/button";
 import {
-    Card,
-    CardContent,
-    CardDescription,
-    CardHeader,
-    CardTitle,
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
-    Select,
-    SelectContent,
-    SelectItem,
-    SelectTrigger,
-    SelectValue,
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
+import useFetch from "@/hooks/use-fetch";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { Loader2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
+import { toast } from "sonner";
 const OnboardForm = ({ industries }) => {
   const [selectedIndustry, setSelectedIndustry] = useState(null);
   const router = useRouter();
+
+  const { loading: updateLoading, fun: updateUserFn, data: updateResult } = useFetch(updateUser);
 
   const {
     register,
@@ -37,11 +43,36 @@ const OnboardForm = ({ industries }) => {
   } = useForm({
     resolver: zodResolver(onboardingSchema),
   });
-  const watchIndustry = watch("industry");
+
 
   const onSubmit = async (values) => {
-    console.log(values);
+
+    try {
+      console.log(values);
+      const formattedIndustry = `${values.industry}-${values.subIndustry.toLowerCase().replace(/ /g, "-")}`;
+      await updateUserFn({
+        ...values,
+        industry: formattedIndustry,
+
+      }
+      )
+    } catch (error) {
+
+    }
   };
+
+  const watchIndustry = watch("industry");
+
+  useEffect(() => {
+    if (updateResult?.success && !updateLoading) {
+      toast.success("Profile completed successfully.")
+      router.push("/dashboard");
+      router.refresh();
+
+    }
+
+  }, [updateResult, updateLoading]);
+
   return (
     <div className="flex items-center justify-center bg-background">
       <Card className={"w-full max-w-lg mt-10 mx-20"}>
@@ -164,13 +195,24 @@ const OnboardForm = ({ industries }) => {
                 className={"h-32"}
                 {...register("bio")}
               />
-            
+
 
               {errors.bio && (
                 <p className="text-sm text-red-500">{errors.bio.message}</p>
               )}
             </div>
-            <Button type="submit" className={"w-full"}>Complete Profile</Button>
+            <Button type="submit" className={"w-full"} disabled={updateLoading}>
+
+              {
+                updateLoading ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  </>
+
+                ) : (
+                  "Complete Profile"
+                )
+              }</Button>
           </form>
         </CardContent>
       </Card>
