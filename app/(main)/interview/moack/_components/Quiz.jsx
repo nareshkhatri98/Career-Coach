@@ -15,10 +15,11 @@ import useFetch from "@/hooks/use-fetch";
 import { useEffect, useState } from "react";
 import { BarLoader } from "react-spinners";
 import { toast } from "sonner";
+
 const Quiz = () => {
   const [currentQuestion, setCurrentQuestion] = useState(0);
   const [answers, setAnswers] = useState([]);
-  const [showExplanation, setExplanation] = useState(false);
+  const [showExplanation, setShowExplanation] = useState(false);
 
   const {
     loading: generatingQuiz,
@@ -32,7 +33,6 @@ const Quiz = () => {
     data: resultData,
     setData: setResultData,
   } = useFetch(saveQuizResult);
-  console.log("resultData", resultData);
 
   useEffect(() => {
     if (quizData) {
@@ -40,57 +40,59 @@ const Quiz = () => {
     }
   }, [quizData]);
 
-  // handle answer
-  const handleAnswer = (answers) => {
+  const handleAnswer = (selectedAnswer) => {
     const newAnswers = [...answers];
-    newAnswers[currentQuestion] = answers;
+    newAnswers[currentQuestion] = selectedAnswer;
     setAnswers(newAnswers);
   };
-  // handle next question
+
   const handleNext = () => {
-    if ((question < quizData, length - 1)) {
+    if (currentQuestion < quizData.length - 1) {
       setCurrentQuestion(currentQuestion + 1);
-      setExplanation(false);
+      setShowExplanation(false);
     } else {
       finishQuiz();
     }
   };
-// calculate the score
+
   const calculateScore = () => {
-    let correct =0;
+    let correct = 0;
     answers.forEach((answer, index) => {
-     if(answer === quizData[index].correctAnswer) {
+      if (answer === quizData[index].correctAnswer) {
         correct++;
       }
     });
     return (correct / quizData.length) * 100;
-  }
+  };
 
-  // handle finish quiz
   const finishQuiz = async () => {
     const score = calculateScore();
     try {
-      await saveQuizResultFn(quizData, answers, score);
+      await saveQuizResultFn({
+        question: quizData,
+        answers,
+        score,
+      });
       toast.success("Quiz Completed!");
     } catch (error) {
       toast.error("Error saving quiz result: " + error.message);
-      
     }
   };
 
   if (generatingQuiz) {
-    return <BarLoader className="mt-4 " width={"100%"} color="gray" />;
+    return <BarLoader className="mt-4" width={"100%"} color="gray" />;
   }
+
   if (!quizData) {
     return (
       <Card>
         <CardHeader>
-          <CardTitle>Ready to test your knowledge</CardTitle>
+          <CardTitle>Ready to test your knowledge?</CardTitle>
         </CardHeader>
         <CardContent>
           <p>
-            This quiz contains 10 questions specific to your industry and skills
-            . Take your time and choose best answer for each question.
+            This quiz contains 10 questions specific to your industry and skills.
+            Take your time and choose the best answer for each question.
           </p>
         </CardContent>
         <CardFooter>
@@ -101,13 +103,14 @@ const Quiz = () => {
       </Card>
     );
   }
-  console.log("hello", quizData);
+
   const question = quizData[currentQuestion];
+
   return (
     <Card className={"mx-2"}>
       <CardHeader>
         <CardTitle>
-          Questions {currentQuestion + 1} of {quizData.length}
+          Question {currentQuestion + 1} of {quizData.length}
         </CardTitle>
       </CardHeader>
       <CardContent className={"space-y-4"}>
@@ -117,15 +120,14 @@ const Quiz = () => {
           onValueChange={handleAnswer}
           value={answers[currentQuestion]}
         >
-          {question.options.map((option, index) => {
-            return (
-              <div key={index} className="flex items-center space-x-2">
-                <RadioGroupItem value={option} id={`option-${index}`} />
-                <Label htmlFor={`option-${index}`}>{option}</Label>
-              </div>
-            );
-          })}
+          {question.options.map((option, index) => (
+            <div key={index} className="flex items-center space-x-2">
+              <RadioGroupItem value={option} id={`option-${index}`} />
+              <Label htmlFor={`option-${index}`}>{option}</Label>
+            </div>
+          ))}
         </RadioGroup>
+
         {showExplanation && (
           <div className="mt-4 p-4 bg-muted rounded-lg">
             <p className="font-medium">Explanation:</p>
@@ -135,7 +137,7 @@ const Quiz = () => {
       </CardContent>
       <CardFooter>
         <Button
-          onClick={() => showExplanation(true)}
+          onClick={() => setShowExplanation(true)}
           variant={"outline"}
           disabled={!answers[currentQuestion]}
         >
@@ -146,12 +148,13 @@ const Quiz = () => {
           disabled={!answers[currentQuestion] || savingResult}
           className={"ml-auto"}
         >
-          {savingResult &&(
+          {savingResult ? (
             <BarLoader className="mr-2" width={"100%"} color="gray" />
+          ) : currentQuestion < quizData.length - 1 ? (
+            "Next Question"
+          ) : (
+            "Finish Quiz"
           )}
-          {currentQuestion < quizData.length - 1
-            ? "Next Question"
-            : "Finish Quiz"}
         </Button>
       </CardFooter>
     </Card>

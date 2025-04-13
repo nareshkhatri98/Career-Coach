@@ -52,7 +52,7 @@ export async function generateQuiz() {
     throw new Error("Failed to generate quiz");
   }
 }
-export async function saveQuizResult({ questions, answers, score }) {
+export async function saveQuizResult({ question, answers, score }) {
   const { userId } = await auth();
   if (!userId) throw new Error("unauthorized");
   const user = await db.user.findUnique({
@@ -62,7 +62,7 @@ export async function saveQuizResult({ questions, answers, score }) {
   });
   if (!user) throw new Error("User not found");
 
-  const questionResult = questions.map((qn, index) => ({
+  const questionResult = question.map((qn, index) => ({
     question: qn.question,
     answer: qn.answer,
     userAnswer: answers[index],
